@@ -59,14 +59,14 @@ namespace tomxyz.katastr
                 var elements = driver.FindElements(By.XPath($"//table[@class = '{FlatsTableClass}']//td/a"));
                 var links = elements.Select(x => x.GetAttribute("href"));
 
-                // open all links in separated tabs
+                var currentTab = driver.WindowHandles.FirstOrDefault();
+
                 var tabs = new List<string>();
                 foreach (var link in links)
-                    tabs.Add(driver.NewTab(link));
-
-                foreach (var tab in tabs)
-                {// close tabs without any plombs
+                {// open all flat units and check plombs
+                    var tab = driver.NewTab(link);
                     driver.SwitchTo().Window(tab);
+
                     try
                     {
                         var plomba = driver.FindElement(By.ClassName(PlombClass));
@@ -77,6 +77,8 @@ namespace tomxyz.katastr
                     {
                         driver.Close();
                     }
+
+                    driver.SwitchTo().Window(currentTab);
                 }
 
                 return 0;
