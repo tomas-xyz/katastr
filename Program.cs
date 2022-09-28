@@ -83,6 +83,11 @@ namespace tomxyz.katastr
 
                 return 0;
             }
+            catch (InvalidOperationException e) when (e.Message.Contains("ChromeDriver only supports Chrome version"))
+            {
+                Console.WriteLine($"\r\nVas ChromeDriver.exe neodpovida verzi prohlizece. Stahnete si aktualni ze stranek 'https://chromedriver.chromium.org/downloads' a soubor nahradte. \r\n\r\n{e}");
+                return 1;
+            }
             catch (Exception e)
             {
                 Console.WriteLine($"Nastala chyba: \r\n{e}");
