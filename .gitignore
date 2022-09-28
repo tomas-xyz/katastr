@@ -1,0 +1,9 @@
+#directories
+.vs
+PublishProfiles/
+bin/
+obj/
+
+#files
+launchSettings.json
+*.csproj.user
