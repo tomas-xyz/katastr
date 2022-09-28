@@ -6,7 +6,7 @@ namespace tomxyz.katastr
 {
     class KatastrDownloaded
     {
-        private static string AddressFileName = "adresa.json";
+        private static string ConfigFileName = "katastr.json";
         private static string LoginPage = "https://login.cuzk.cz/login.do?typPrihlaseni=NAHLIZENI";
         private static string FlatPage = "https://nahlizenidokn.cuzk.cz/VyberBudovu/Jednotka/InformaceO";
         private static string LoginButtonId = "niaSubmitBtn";
@@ -16,47 +16,44 @@ namespace tomxyz.katastr
         private static string AfterAddressElementId = "ctl00_bodyPlaceHolder_panelSeznamBudov";
         private static string FlatsTableClass = "zarovnat stinuj  ";
         private static string PlombClass = "plomba";
-        private static TimeSpan WaitingTimeout = TimeSpan.FromMinutes(2);
-
+        private static TimeSpan WaitingTimeout = TimeSpan.FromMinutes(5);
 
         public static int Main(string[] args)
         {
             try
             {
-                var address = string.Empty;
-                if (args.Length > 0)
+                var configuration = new Configuration();
+                try
                 {
-                    address = args[0];
+                    using var file = File.OpenRead(ConfigFileName);
+                    configuration = JsonSerializer.Deserialize<Configuration>(file);
+                    if (configuration == null)
+                        throw new Exception($"Konfigurační soubor '{ConfigFileName}' se nebylo možné zpracovat");
                 }
-
-                if (string.IsNullOrEmpty(address))
+                catch (Exception e)
                 {
-                    try
-                    {
-                        using var file = File.OpenRead(AddressFileName);
-                        var addressJson = JsonSerializer.Deserialize<Address>(file);
-                        if (addressJson != null)
-                            address = addressJson.adresa;
-                    }
-                    catch (Exception)
-                    {
-                    }
+                    throw new Exception($"Konfigurační soubor '{ConfigFileName}' neexistuje nebo se jej nepodařilo zpracovat", e);
                 }
 
                 IWebDriver driver = new ChromeDriver();
                 driver.Navigate().GoToUrl(LoginPage);
 
+                // login page
                 var login = driver.FindElement(By.Id(LoginButtonId));
                 login.Click();
 
-                var mobKey = driver.FindElement(By.ClassName(MobileKeyClass));
-                mobKey.Click();
+                if (configuration.mobilniKlic)
+                {
+                    var mobKey = driver.FindElement(By.ClassName(MobileKeyClass));
+                    mobKey.Click();
+                }
 
-                // wait for login with mobile key
-                driver.WaitFor(WaitingTimeout, By.ClassName(AfterLoginElementClass));
+                // wait for login
+                if (!driver.WaitFor(WaitingTimeout, By.ClassName(AfterLoginElementClass)))
+                    throw new Exception($"Prihlaseni se nezdarilo v casovem limitu '{WaitingTimeout}'");
 
                 driver.Navigate().GoToUrl(FlatPage);
-                driver.FindElement(By.Id(AddressInputID)).SendKeys(address);
+                driver.FindElement(By.Id(AddressInputID)).SendKeys(configuration.adresa);
                 driver.WaitFor(TimeSpan.FromMinutes(1), By.Id(AfterAddressElementId));
 
                 var elements = driver.FindElements(By.XPath($"//table[@class = '{FlatsTableClass}']//td/a"));
@@ -86,7 +83,7 @@ namespace tomxyz.katastr
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error: \r\n{e}");
+                Console.WriteLine($"Nastala chyba: \r\n{e}");
                 return 1;
             }
         }
