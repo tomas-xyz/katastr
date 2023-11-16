@@ -13,7 +13,8 @@ public class KatastrDownloaded
     private static string FlatPage = "https://nahlizenidokn.cuzk.cz/VyberBudovu/Jednotka/InformaceO";
     private static string LoginButtonId = "niaSubmitBtn";
     private static string AddressInputID = "ctl00_bodyPlaceHolder_txtAdresa";
-    private static string MobileKeyClass = "gg-idprecord-link";
+    private static string MobileKeyParentId = "stateIdps";
+    private static string MobileKeyId = "12";
     private static string AfterLoginElementClass = "rychlaNavigace-box";
     private static string AfterAddressElementId = "ctl00_bodyPlaceHolder_panelSeznamBudov";
     private static string FlatsTableClass = "zarovnat stinuj  ";
@@ -70,7 +71,8 @@ public class KatastrDownloaded
 
             if (configuration.mobilniKlic)
             {
-                var mobKey = driver.FindElement(By.ClassName(MobileKeyClass));
+                var stateIdps = driver.FindElement(By.Id(MobileKeyParentId));
+                var mobKey = stateIdps.FindElement(By.Id(MobileKeyId));
                 mobKey.Click();
             }
 
@@ -187,7 +189,7 @@ public class KatastrDownloaded
         }
         catch (Exception e)
         {
-            int a = 1;
+            return false;
         }
         finally
         {
